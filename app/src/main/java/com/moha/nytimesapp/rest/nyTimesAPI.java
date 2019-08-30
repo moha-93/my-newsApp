@@ -1,7 +1,9 @@
-package com.example.nytimesapidemo;
+package com.moha.nytimesapp.rest;
 
 
 
+
+import com.moha.nytimesapp.modal.Response;
 
 import retrofit2.Call;
 import retrofit2.http.GET;

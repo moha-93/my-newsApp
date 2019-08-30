@@ -1,6 +1,7 @@
-package com.example.nytimesapidemo;
+package com.moha.nytimesapp.adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -13,13 +14,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.moha.nytimesapp.modal.Article;
+import com.moha.nytimesapp.database.FavoriteDbHelper;
+import com.moha.nytimesapp.utility.NetworkUtils;
+import com.moha.nytimesapp.R;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ARViewHolder> {
     private List<Article> articleList;
+
     private Context context;
     public static List<Article> offlineArticles = new ArrayList<>();
     private boolean isDark = false;
@@ -32,9 +39,8 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ARViewHo
     }
 
 
-
-    public ArticleAdapter(List<Article> articlesList, Context context) {
-        this.articleList = articlesList;
+    public ArticleAdapter(List<Article> articleList, Context context) {
+        this.articleList = articleList;
         this.context = context;
     }
 
@@ -64,9 +70,10 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ARViewHo
             arViewHolder.imageView.setImageResource(0);
             if (article.mediaList.get(0).metadata.size() > 2) {
                 Picasso.get().load(article.getMediaList().get(0).getMetadata().get(1).getImgUrl())
-                        .resize(70, 70).centerCrop().into(arViewHolder.imageView);
+                        .into(arViewHolder.imageView);
 
             }
+
 
             arViewHolder.toggleButton.setTextOff("Add");
             arViewHolder.toggleButton.setTextOn("Remove");
@@ -76,21 +83,23 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ARViewHo
                 public void onClick(View v) {
 
                     article.isFavorite = !article.isFavorite;
-                    if (!NetworkUtils.isNetworkAvailable(context)){
-                        FavoriteDbHelper dbHelper= new FavoriteDbHelper(context);
+                    if (!NetworkUtils.isNetworkAvailable(context)) {
+                        FavoriteDbHelper dbHelper = new FavoriteDbHelper(context);
                         dbHelper.updateArticle(article);
                     }
 
-                    if (article.isFavorite){
+                    if (article.isFavorite) {
                         arViewHolder.toggleButton.setTextOff("Add");
                         offlineArticles.add(article);
                         Toast.makeText(context, "Added to favorites..press on ♥ ", Toast.LENGTH_SHORT).show();
 
-                    }else {
+                    } else {
                         arViewHolder.toggleButton.setTextOn("Remove");
-                        offlineArticles.clear();
                         offlineArticles.remove(article);
+
+
                         Toast.makeText(context, "Item removed..☺ ", Toast.LENGTH_SHORT).show();
+
 
                     }
                 }
@@ -101,10 +110,6 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ARViewHo
 
     }
 
-    public void addArticles(Article articles){
-        articleList.add(articles);
-        notifyDataSetChanged();
-    }
 
     @Override
     public int getItemCount() {
@@ -126,7 +131,7 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ARViewHo
             txt_date = itemView.findViewById(R.id.txt_date);
             imageView = itemView.findViewById(R.id.model_img);
             linearLayout = itemView.findViewById(R.id.anim_container);
-            toggleButton=itemView.findViewById(R.id.btn_add);
+            toggleButton = itemView.findViewById(R.id.btn_add);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -151,6 +156,9 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ARViewHo
         private void setDarkTheme() {
 
             linearLayout.setBackgroundResource(R.drawable.card_black_bg);
+            txt_headline.setTextColor(Color.rgb(240, 248, 255));
+            txt_summary.setTextColor(Color.WHITE);
+            txt_date.setTextColor(Color.WHITE);
 
         }
     }
@@ -163,3 +171,4 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ARViewHo
         this.listener = listener;
     }
 }
+

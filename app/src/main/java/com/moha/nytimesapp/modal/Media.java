@@ -1,4 +1,4 @@
-package com.example.nytimesapidemo;
+package com.moha.nytimesapp.modal;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -30,16 +30,9 @@ public class Media implements Parcelable {
         }
     };
 
-    public Media() {
-
-    }
 
     public List<MediaMetadata> getMetadata() {
         return metadata;
-    }
-
-    public void setMetadata(List<MediaMetadata> metadata) {
-        this.metadata = metadata;
     }
 
     @Override

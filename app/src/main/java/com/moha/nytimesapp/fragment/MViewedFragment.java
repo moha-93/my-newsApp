@@ -1,11 +1,11 @@
-package com.example.nytimesapidemo;
+package com.moha.nytimesapp.fragment;
 
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
@@ -14,12 +14,23 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+
+import com.moha.nytimesapp.BuildConfig;
+import com.moha.nytimesapp.utility.NetworkUtils;
+import com.moha.nytimesapp.R;
+import com.moha.nytimesapp.activity.FavoriteActivity;
+import com.moha.nytimesapp.activity.WebActivity;
+import com.moha.nytimesapp.adapter.ArticleAdapter;
+import com.moha.nytimesapp.modal.Article;
+import com.moha.nytimesapp.modal.Response;
+import com.moha.nytimesapp.rest.ApiClient;
+import com.moha.nytimesapp.rest.nyTimesAPI;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,55 +41,55 @@ import retrofit2.Callback;
 import static android.content.Context.MODE_PRIVATE;
 
 
-public class MSharedFragment extends Fragment implements ArticleAdapter.OnItemClickListener {
+public class MViewedFragment extends Fragment implements ArticleAdapter.OnItemClickListener {
 
+    public static final String API_KEY = BuildConfig.ApiKey;
+    private ArrayList<Article> arrayList;
     private List<Article> articleList;
+    protected FragmentActivity mActivity;
     private ArticleAdapter adapter;
     private RecyclerView recyclerView;
-    public static final String API_KEY = BuildConfig.ApiKey;
-    @SuppressLint("StaticFieldLeak")
-    public static MSharedFragment instance;
-    public FragmentActivity mActivity;
     private CoordinatorLayout coordinatorLayout;
-    boolean isDark = false;
+    StaggeredGridLayoutManager mLayoutManager;
+    private boolean isDark = false;
+    @SuppressLint("StaticFieldLeak")
+    static MViewedFragment instance;
 
-
-    public MSharedFragment() {
+    public MViewedFragment() {
         // Required empty public constructor
     }
 
-
-    public static synchronized MSharedFragment getInstance() {
+    public static MViewedFragment getInstance() {
         if (instance == null) {
-            instance = new MSharedFragment();
+            instance = new MViewedFragment();
 
         }
         return instance;
     }
 
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
 
-        View view = inflater.inflate(R.layout.fragment_mshared, container, false);
-        coordinatorLayout = view.findViewById(R.id.msf_content);
-        FloatingActionButton actionButton = view.findViewById(R.id.btnDM_msh);
-        FloatingActionButton btnAdd_favorite = view.findViewById(R.id.btn_msh_favorite);
+        View view = inflater.inflate(R.layout.fragment_mviewed, container, false);
+        coordinatorLayout = view.findViewById(R.id.mv_content);
+        FloatingActionButton actionButton = view.findViewById(R.id.btnDM_mv);
+        FloatingActionButton btnAdd_favorite = view.findViewById(R.id.btn_mv_favorite);
         recyclerView = view.findViewById(R.id.mvRecycler_view);
-        recyclerView.setLayoutManager(new LinearLayoutManager(mActivity));
         recyclerView.setHasFixedSize(true);
-        articleList = new ArrayList<>();
+        setOrientation();
 
         if (savedInstanceState != null) {
-            articleList = savedInstanceState.getParcelableArrayList("articles");
+            arrayList = savedInstanceState.getParcelableArrayList("articles");
         } else {
-            articleList = new ArrayList<>();
+            arrayList = new ArrayList<>();
         }
 
-        if (NetworkUtils.isNetworkAvailable(mActivity)){
+        if (NetworkUtils.isNetworkAvailable(mActivity)) {
             loadJson();
-        }else {
+
+        } else {
             Toast.makeText(mActivity, "No connection...", Toast.LENGTH_SHORT).show();
         }
 
@@ -106,9 +117,11 @@ public class MSharedFragment extends Fragment implements ArticleAdapter.OnItemCl
                     coordinatorLayout.setBackgroundColor(getResources().getColor(R.color.white));
 
                 }
+                setOrientation();
                 adapter = new ArticleAdapter(articleList, mActivity, isDark);
                 recyclerView.setAdapter(adapter);
                 saveThemeStatePref(isDark);
+                adapter.setOnItemClickListener(MViewedFragment.this);
             }
         });
 
@@ -122,27 +135,29 @@ public class MSharedFragment extends Fragment implements ArticleAdapter.OnItemCl
 
 
         return view;
-
     }
 
     private void loadJson() {
         nyTimesAPI timesAPI = ApiClient.getRetrofit().create(nyTimesAPI.class);
-        Call<Response> call = timesAPI.getShared(30, "facebook", API_KEY);
+        Call<Response> call = timesAPI.getViewed(1, API_KEY);
         call.enqueue(new Callback<Response>() {
             @Override
             public void onResponse(@NonNull Call<Response> call, @NonNull retrofit2.Response<Response> response) {
                 if (response.isSuccessful()) {
                     if (response.body() != null) {
                         articleList = response.body().getArticles();
-                        adapter = new ArticleAdapter(articleList, mActivity,isDark);
+                        arrayList.addAll(articleList);
+                        adapter = new ArticleAdapter(arrayList, mActivity, isDark);
                         recyclerView.setAdapter(adapter);
-                        adapter.notifyDataSetChanged();
-                        adapter.setOnItemClickListener(MSharedFragment.this);
+                        adapter.notifyItemRangeInserted(adapter.getItemCount(), arrayList.size() - 1);
+                        adapter.setOnItemClickListener(MViewedFragment.this);
 
 
                     }
                 } else {
-                    Snackbar.make(coordinatorLayout, "Error: " + response.message(), Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(coordinatorLayout, "Error: " + response.message(),
+                            Snackbar.LENGTH_LONG).show();
+
                 }
 
             }
@@ -153,6 +168,20 @@ public class MSharedFragment extends Fragment implements ArticleAdapter.OnItemCl
 
             }
         });
+
+    }
+
+    private void setOrientation() {
+        switch (getResources().getConfiguration().orientation) {
+            case Configuration.ORIENTATION_PORTRAIT:
+                mLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+                break;
+            case Configuration.ORIENTATION_LANDSCAPE:
+                mLayoutManager = new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL);
+                break;
+
+        }
+        recyclerView.setLayoutManager(mLayoutManager);
     }
 
     private void saveThemeStatePref(boolean isDark) {
@@ -170,19 +199,19 @@ public class MSharedFragment extends Fragment implements ArticleAdapter.OnItemCl
 
     }
 
-
     @Override
     public void OnItemClick(int position) {
         Intent webIntent = new Intent(mActivity, WebActivity.class);
         Article articles = articleList.get(position);
         webIntent.putExtra("url", articles.getWebUrl());
         startActivity(webIntent);
+
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof Activity) {
+        if (context instanceof FragmentActivity) {
             mActivity = (FragmentActivity) context;
         }
     }
@@ -196,6 +225,7 @@ public class MSharedFragment extends Fragment implements ArticleAdapter.OnItemCl
     @Override
     public void onSaveInstanceState(@NonNull Bundle state) {
         super.onSaveInstanceState(state);
-        state.putParcelableArrayList("articles", (ArrayList<? extends Parcelable>) articleList);
+        state.putParcelableArrayList("articles", arrayList);
     }
+
 }

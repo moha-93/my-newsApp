@@ -6,13 +6,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_margin="4dp"
-    tools:context=".MEmailedFragment">
+    tools:context=".fragment.MEmailedFragment">
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/mvRecycler_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#fff"
         tools:listitem="@layout/news_model" />
 
     <android.support.design.widget.FloatingActionButton

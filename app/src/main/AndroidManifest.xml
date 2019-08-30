@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.nytimesapidemo">
+    package="com.moha.nytimesapp">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -15,14 +15,19 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
 
-        <activity android:name=".FavoriteActivity"
-            android:parentActivityName=".MainActivity"/>
+        <activity android:name="com.moha.nytimesapp.activity.FavoriteActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+            />
 
         <activity
-            android:name=".WebActivity"
-            android:parentActivityName=".MainActivity"
-            android:theme="@style/Theme.Design.NoActionBar"/>
-        <activity android:name=".MainActivity">
+            android:name="com.moha.nytimesapp.activity.WebActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+
+
+            />
+        <activity android:name="com.moha.nytimesapp.activity.MainActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

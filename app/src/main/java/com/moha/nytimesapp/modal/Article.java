@@ -1,4 +1,4 @@
-package com.example.nytimesapidemo;
+package com.moha.nytimesapp.modal;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -10,9 +10,6 @@ import java.util.List;
 
 public class Article implements Parcelable {
 
-    @SerializedName("id")
-    @Expose
-    private Long articleId;
 
     @SerializedName("url")
     @Expose
@@ -59,17 +56,11 @@ public class Article implements Parcelable {
         }
     };
 
-    public Long getArticleId() {
-        return articleId;
-    }
 
     public boolean isFavorite() {
         return isFavorite;
     }
 
-    public void setArticleId(Long articleId) {
-        this.articleId = articleId;
-    }
 
     public String getWebUrl() {
         return webUrl;
@@ -91,10 +82,6 @@ public class Article implements Parcelable {
         return publishDate;
     }
 
-    public void setWebUrl(String webUrl) {
-        this.webUrl = webUrl;
-    }
-
     public void setHeadLine(String headLine) {
         this.headLine = headLine;
     }
@@ -105,10 +92,6 @@ public class Article implements Parcelable {
 
     public void setPublishDate(String publishDate) {
         this.publishDate = publishDate;
-    }
-
-    public void setMediaList(List<Media> mediaList) {
-        this.mediaList = mediaList;
     }
 
     public void setFavorite(boolean favorite) {

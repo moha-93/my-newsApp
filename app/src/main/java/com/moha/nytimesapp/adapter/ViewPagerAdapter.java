@@ -1,4 +1,4 @@
-package com.example.nytimesapidemo;
+package com.moha.nytimesapp.adapter;
 
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;

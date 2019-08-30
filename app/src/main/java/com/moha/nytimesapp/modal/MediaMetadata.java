@@ -1,4 +1,4 @@
-package com.example.nytimesapidemo;
+package com.moha.nytimesapp.modal;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -11,16 +11,6 @@ public class MediaMetadata implements Parcelable {
     @SerializedName("url")
     @Expose
     private String imgUrl;
-
-    @SerializedName("width")
-    @Expose
-    private Integer width;
-
-    @SerializedName("height")
-    @Expose
-    private Integer height;
-
-
 
     protected MediaMetadata(Parcel in) {
         imgUrl = in.readString();
@@ -38,9 +28,6 @@ public class MediaMetadata implements Parcelable {
         }
     };
 
-    public MediaMetadata() {
-
-    }
 
     @Override
     public int describeContents() {
@@ -50,22 +37,10 @@ public class MediaMetadata implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(imgUrl);
-        dest.writeInt(width);
     }
 
     public String getImgUrl() {
-        return  imgUrl;
+        return imgUrl;
     }
 
-    public void setImgUrl(String imgUrl) {
-        this.imgUrl = imgUrl;
-    }
-
-    public Integer getWidth() {
-        return width;
-    }
-
-    public Integer getHeight() {
-        return height;
-    }
 }

@@ -1,42 +1,44 @@
-package com.example.nytimesapidemo;
+package com.moha.nytimesapp.activity;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+
+import com.moha.nytimesapp.modal.Article;
+import com.moha.nytimesapp.adapter.ArticleAdapter;
+import com.moha.nytimesapp.database.FavoriteDbHelper;
+import com.moha.nytimesapp.R;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FavoriteActivity extends AppCompatActivity {
+public class FavoriteActivity extends AppCompatActivity implements ArticleAdapter.OnItemClickListener {
     private ArticleAdapter adapter;
     List<Article> articlesList;
     private FavoriteDbHelper dbHelper;
-    public boolean isDestroy = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_favorite);
+        Toolbar toolbar = findViewById(R.id.toolbar_2nd);
+        toolbar.setTitle("Favorite List");
+        setSupportActionBar(toolbar);
+
         dbHelper = new FavoriteDbHelper(this);
-
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Favorite list");
-        }
-
-
         RecyclerView recyclerView = findViewById(R.id.favorite_recycler_view);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         articlesList = new ArrayList<>();
         adapter = new ArticleAdapter(articlesList, this);
-        recyclerView.setAdapter(adapter);
-        adapter.notifyDataSetChanged();
         getOfflineArticles();
-
-
+        recyclerView.setAdapter(adapter);
+        adapter.setOnItemClickListener(this);
 
     }
 
@@ -46,9 +48,9 @@ public class FavoriteActivity extends AppCompatActivity {
 
             @Override
             protected Void doInBackground(Void... voids) {
-                articlesList.clear();
-                dbHelper.getArticles();
+                ArticleAdapter.offlineArticles.addAll(dbHelper.getArticles());
                 articlesList.addAll(ArticleAdapter.offlineArticles);
+
 
                 return null;
 
@@ -60,15 +62,16 @@ public class FavoriteActivity extends AppCompatActivity {
                 adapter.notifyDataSetChanged();
             }
         }.execute();
+
     }
+
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (isDestroy) {
-            getOfflineArticles();
-        }
+    public void OnItemClick(int position) {
+        Article article = articlesList.get(position);
+        Intent intent = new Intent(FavoriteActivity.this, WebActivity.class);
+        intent.putExtra("url", article.getWebUrl());
+        startActivity(intent);
     }
-
-
 }
+

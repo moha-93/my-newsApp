@@ -1,4 +1,4 @@
-package com.example.nytimesapidemo;
+package com.moha.nytimesapp;
 
 import org.junit.Test;
 

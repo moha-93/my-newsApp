@@ -1,4 +1,4 @@
-package com.example.nytimesapidemo;
+package com.moha.nytimesapp;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

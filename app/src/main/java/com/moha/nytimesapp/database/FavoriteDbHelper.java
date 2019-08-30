@@ -1,4 +1,4 @@
-package com.example.nytimesapidemo;
+package com.moha.nytimesapp.database;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -6,7 +6,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.example.nytimesapidemo.Contract.*;
+import com.moha.nytimesapp.database.Contract.*;
+import com.moha.nytimesapp.modal.Article;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,9 +67,9 @@ public class FavoriteDbHelper extends SQLiteOpenHelper {
         db.close();
     }
 
-    public List<Article> getArticles() {
+    public ArrayList<Article> getArticles() {
 
-        List<Article> articlesList = new ArrayList<>();
+        ArrayList<Article> articlesList = new ArrayList<>();
         db = getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM " + ArticleTable.TABLE_NAME, null);
 

@@ -1,4 +1,4 @@
-package com.example.nytimesapidemo;
+package com.moha.nytimesapp.utility;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -29,7 +29,6 @@ public class NetworkUtils {
 
 
         }
-
 
         return false;
 

@@ -1,4 +1,4 @@
-package com.example.nytimesapidemo;
+package com.moha.nytimesapp.database;
 
 import android.provider.BaseColumns;
 

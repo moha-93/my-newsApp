@@ -7,14 +7,13 @@
     android:orientation="vertical"
     android:id="@+id/mef_content"
     android:layout_margin="4dp"
-    tools:context=".MEmailedFragment">
+    tools:context=".fragment.MEmailedFragment">
 
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/meRecycler_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#fff"
         />
 
     <android.support.design.widget.FloatingActionButton

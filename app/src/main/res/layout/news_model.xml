@@ -3,8 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="4dp"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_gravity="center"
+    android:layout_margin="4dp"
     app:cardCornerRadius="16dp"
     app:cardElevation="3dp">
 
@@ -12,27 +13,29 @@
         android:id="@+id/anim_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:background="@drawable/card_bg"
-        android:padding="8dp"
-        >
+        android:orientation="vertical"
+        android:padding="8dp">
 
         <ImageView
             android:id="@+id/model_img"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
             android:src="@mipmap/ic_launcher"
+            android:scaleType="fitXY"
+            tools:ignore="ContentDescription"
             />
 
         <TextView
             android:id="@+id/txt_headline"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:maxLines="1"
-            android:scrollHorizontally="true"
             android:text="This is the headline"
             android:textColor="@color/title_text_color"
-            android:textSize="18sp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:layout_marginTop="5dp"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
         <TextView
@@ -41,6 +44,9 @@
             android:layout_height="wrap_content"
             android:lineSpacingExtra="-3dp"
             android:text="This is the Summary"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:layout_marginTop="5dp"
             android:textColor="@color/summary_text_color"
             android:textSize="12sp" />
 
@@ -48,15 +54,18 @@
             android:id="@+id/txt_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:textColor="@color/summary_text_color"
+            android:textColor="@color/colorAccent"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:layout_marginTop="5dp"
+            android:text="30/8/2019"
             android:textSize="12sp" />
 
         <ToggleButton
             android:id="@+id/btn_add"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"/>
+            android:layout_gravity="end" />
 
     </LinearLayout>
 
