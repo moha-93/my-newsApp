@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -22,10 +21,10 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.moha.nytimesapp.BuildConfig;
+import com.moha.nytimesapp.utility.ChromeUtils;
 import com.moha.nytimesapp.utility.NetworkUtils;
 import com.moha.nytimesapp.R;
 import com.moha.nytimesapp.activity.FavoriteActivity;
-import com.moha.nytimesapp.activity.WebActivity;
 import com.moha.nytimesapp.adapter.ArticleAdapter;
 import com.moha.nytimesapp.modal.Article;
 import com.moha.nytimesapp.modal.Response;
@@ -35,8 +34,10 @@ import com.moha.nytimesapp.rest.nyTimesAPI;
 import java.util.ArrayList;
 import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.Callback;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 
 import static android.content.Context.MODE_PRIVATE;
 
@@ -54,7 +55,8 @@ public class MEmailedFragment extends Fragment implements ArticleAdapter.OnItemC
     private CoordinatorLayout coordinatorLayout;
     StaggeredGridLayoutManager mLayoutManager;
     boolean isDark = false;
-    FloatingActionButton actionButton, favoriteButton;
+    FloatingActionButton btn_darkMode, favoriteButton;
+    CompositeDisposable disposable = new CompositeDisposable();
 
     public MEmailedFragment() {
         // Required empty public constructor
@@ -72,26 +74,31 @@ public class MEmailedFragment extends Fragment implements ArticleAdapter.OnItemC
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_memailed, container, false);
         coordinatorLayout = view.findViewById(R.id.mef_content);
-        actionButton = view.findViewById(R.id.btn_float);
-        favoriteButton = view.findViewById(R.id.btn_add_favorite);
+        btn_darkMode = view.findViewById(R.id.btn_float);
+        favoriteButton = view.findViewById(R.id.btn_me_favorite);
 
         recyclerView = view.findViewById(R.id.meRecycler_view);
         recyclerView.setHasFixedSize(true);
-        setOrientation();
+        setLayoutManager();
 
+        // Check InstanceState
         if (savedInstanceState != null) {
             arrayList = savedInstanceState.getParcelableArrayList("articles");
         } else {
             arrayList = new ArrayList<>();
         }
 
+     //---------------------------------------------------------------------------------------------
+        // Check Internet connection and fetching the data
         if (NetworkUtils.isNetworkAvailable(mActivity)) {
-            loadJSON();
+            fetchData();
         } else {
 
             Toast.makeText(mActivity, "No connection...", Toast.LENGTH_LONG).show();
         }
 
+     //---------------------------------------------------------------------------------------------
+        // Define and check for Dark mode state preference
         isDark = getThemeStatePref();
         if (isDark) {
 
@@ -102,8 +109,9 @@ public class MEmailedFragment extends Fragment implements ArticleAdapter.OnItemC
 
         }
 
-
-        actionButton.setOnClickListener(new View.OnClickListener() {
+        //---------------------------------------------------------------------------------------------
+        // Button set for Dark mode
+        btn_darkMode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 isDark = !isDark;
@@ -116,7 +124,7 @@ public class MEmailedFragment extends Fragment implements ArticleAdapter.OnItemC
                     coordinatorLayout.setBackgroundColor(getResources().getColor(R.color.white));
 
                 }
-                setOrientation();
+                setLayoutManager();
                 adapter = new ArticleAdapter(articleList, mActivity, isDark);
                 recyclerView.setAdapter(adapter);
                 saveThemeStatePref(isDark);
@@ -126,7 +134,8 @@ public class MEmailedFragment extends Fragment implements ArticleAdapter.OnItemC
             }
         });
 
-
+     //---------------------------------------------------------------------------------------------
+        //Set button for favorite list
         favoriteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -142,62 +151,87 @@ public class MEmailedFragment extends Fragment implements ArticleAdapter.OnItemC
 
     }
 
-    private void loadJSON() {
-
-
+    //Get and display the data from the server
+    private void fetchData() {
         nyTimesAPI timesAPI = ApiClient.getRetrofit().create(nyTimesAPI.class);
-        Call<Response> call = timesAPI.getEmailed(1, API_KEY);
+        disposable.add(timesAPI.getEmailedArticles(1, API_KEY)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<Response>() {
+                    @Override
+                    public void accept(Response response) throws Exception {
 
-        call.enqueue(new Callback<Response>() {
-            @Override
-            public void onResponse(@NonNull Call<Response> call,
-                                   @NonNull retrofit2.Response<Response> response) {
+                        try {
 
-                if (response.isSuccessful()) {
-                    if (response.body() != null) {
-                        articleList = response.body().getArticles();
-                        arrayList.addAll(articleList);
-                        populateList(arrayList);
+                            if (response != null && response.getArticles() != null) {
+                                articleList = response.getArticles();
+                                arrayList.addAll(articleList);
+                                populateList(arrayList);
+                            }
+
+                        } catch (NumberFormatException e) {
+                            e.printStackTrace();
+                            throw new Exception();
+
+
+                        }
 
                     }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        Snackbar.make(coordinatorLayout, "HTTP Error: " +
+                                throwable.getMessage(), Snackbar.LENGTH_LONG).show();
 
-                } else {
-                    Snackbar.make(coordinatorLayout, "Error: " + response.message(),
-                            Snackbar.LENGTH_LONG).show();
-                }
-            }
+                        throw new Exception();
+                    }
+                }));
 
-            @Override
-            public void onFailure(@NonNull Call<Response> call, @NonNull Throwable t) {
-                Snackbar.make(coordinatorLayout, t.getMessage(), Snackbar.LENGTH_LONG).show();
-
-            }
-        });
     }
-
 
     private void populateList(ArrayList<Article> list) {
         adapter = new ArticleAdapter(list, mActivity, isDark);
         recyclerView.setAdapter(adapter);
-        adapter.notifyItemRangeInserted(adapter.getItemCount(),arrayList.size()-1);
+        adapter.notifyItemRangeInserted(adapter.getItemCount(), arrayList.size() - 1);
         adapter.setOnItemClickListener(MEmailedFragment.this);
-
 
     }
 
-    private void setOrientation() {
-        switch (getResources().getConfiguration().orientation) {
+    /* Use different layouts for Landscape &
+     * Portrait mode.2 columns in portrait and 3 columns in landscape
+      */
+    private void setLayoutManager() {
+        switch (getResources().getConfiguration().orientation)
+        {
             case Configuration.ORIENTATION_PORTRAIT:
-                mLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+                mLayoutManager =
+                        new StaggeredGridLayoutManager(
+                                2, StaggeredGridLayoutManager.VERTICAL);
                 break;
             case Configuration.ORIENTATION_LANDSCAPE:
-                mLayoutManager = new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL);
+                mLayoutManager =
+                        new StaggeredGridLayoutManager(
+                                3, StaggeredGridLayoutManager.VERTICAL);
                 break;
 
         }
+
         recyclerView.setLayoutManager(mLayoutManager);
     }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+        disposable.clear();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (disposable != null && !disposable.isDisposed()) {
+            disposable.dispose();
+        }
+    }
 
     @Override
     public void onAttach(Context context) {
@@ -216,10 +250,10 @@ public class MEmailedFragment extends Fragment implements ArticleAdapter.OnItemC
 
     @Override
     public void OnItemClick(int position) {
-        Intent webIntent = new Intent(mActivity, WebActivity.class);
         Article articles = articleList.get(position);
-        webIntent.putExtra("url", articles.getWebUrl());
-        startActivity(webIntent);
+        String url = articles.getWebUrl();
+        ChromeUtils.launchChromeTabs(url,mActivity);
+
     }
 
     private void saveThemeStatePref(boolean isDark) {

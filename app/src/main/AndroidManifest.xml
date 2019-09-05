@@ -19,12 +19,6 @@
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
             />
 
-        <activity
-            android:name="com.moha.nytimesapp.activity.WebActivity"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-
-
-            />
         <activity android:name="com.moha.nytimesapp.activity.MainActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
             >

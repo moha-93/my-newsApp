@@ -10,18 +10,17 @@ import java.util.List;
 
 public class Article implements Parcelable {
 
-
     @SerializedName("url")
     @Expose
     private String webUrl;
 
     @SerializedName("title")
     @Expose
-    public String headLine;
+    private String headLine;
 
     @SerializedName("abstract")
     @Expose
-    public String summary;
+    private String summary;
 
     @SerializedName("media")
     @Expose
@@ -29,7 +28,7 @@ public class Article implements Parcelable {
 
     @SerializedName("published_date")
     @Expose
-    public String publishDate;
+    private String publishDate;
 
     public boolean isFavorite;
 
@@ -60,7 +59,6 @@ public class Article implements Parcelable {
     public boolean isFavorite() {
         return isFavorite;
     }
-
 
     public String getWebUrl() {
         return webUrl;

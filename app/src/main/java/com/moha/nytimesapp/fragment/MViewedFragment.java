@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -22,10 +21,10 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.moha.nytimesapp.BuildConfig;
+import com.moha.nytimesapp.utility.ChromeUtils;
 import com.moha.nytimesapp.utility.NetworkUtils;
 import com.moha.nytimesapp.R;
 import com.moha.nytimesapp.activity.FavoriteActivity;
-import com.moha.nytimesapp.activity.WebActivity;
 import com.moha.nytimesapp.adapter.ArticleAdapter;
 import com.moha.nytimesapp.modal.Article;
 import com.moha.nytimesapp.modal.Response;
@@ -35,8 +34,10 @@ import com.moha.nytimesapp.rest.nyTimesAPI;
 import java.util.ArrayList;
 import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.Callback;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 
 import static android.content.Context.MODE_PRIVATE;
 
@@ -54,6 +55,7 @@ public class MViewedFragment extends Fragment implements ArticleAdapter.OnItemCl
     private boolean isDark = false;
     @SuppressLint("StaticFieldLeak")
     static MViewedFragment instance;
+    CompositeDisposable disposable = new CompositeDisposable();
 
     public MViewedFragment() {
         // Required empty public constructor
@@ -74,25 +76,32 @@ public class MViewedFragment extends Fragment implements ArticleAdapter.OnItemCl
 
         View view = inflater.inflate(R.layout.fragment_mviewed, container, false);
         coordinatorLayout = view.findViewById(R.id.mv_content);
-        FloatingActionButton actionButton = view.findViewById(R.id.btnDM_mv);
+        FloatingActionButton btn_darkMode = view.findViewById(R.id.btnDM_mv);
         FloatingActionButton btnAdd_favorite = view.findViewById(R.id.btn_mv_favorite);
         recyclerView = view.findViewById(R.id.mvRecycler_view);
         recyclerView.setHasFixedSize(true);
-        setOrientation();
+        setLayoutManage();
 
+
+        // Check InstanceState
         if (savedInstanceState != null) {
             arrayList = savedInstanceState.getParcelableArrayList("articles");
         } else {
             arrayList = new ArrayList<>();
         }
 
+     //---------------------------------------------------------------------------------------------
+        //Check Internet connection and fetching the data
         if (NetworkUtils.isNetworkAvailable(mActivity)) {
-            loadJson();
+
+            fetchData();
 
         } else {
             Toast.makeText(mActivity, "No connection...", Toast.LENGTH_SHORT).show();
         }
 
+     //---------------------------------------------------------------------------------------------
+        // Define and check for Dark mode state preference
         isDark = getThemeStatePref();
         if (isDark) {
 
@@ -103,8 +112,9 @@ public class MViewedFragment extends Fragment implements ArticleAdapter.OnItemCl
 
         }
 
-
-        actionButton.setOnClickListener(new View.OnClickListener() {
+     //---------------------------------------------------------------------------------------------
+        // Button set for Dark mode
+        btn_darkMode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 isDark = !isDark;
@@ -117,7 +127,7 @@ public class MViewedFragment extends Fragment implements ArticleAdapter.OnItemCl
                     coordinatorLayout.setBackgroundColor(getResources().getColor(R.color.white));
 
                 }
-                setOrientation();
+                setLayoutManage();
                 adapter = new ArticleAdapter(articleList, mActivity, isDark);
                 recyclerView.setAdapter(adapter);
                 saveThemeStatePref(isDark);
@@ -125,6 +135,8 @@ public class MViewedFragment extends Fragment implements ArticleAdapter.OnItemCl
             }
         });
 
+        //---------------------------------------------------------------------------------------------
+        //Set button for favorite list
         btnAdd_favorite.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -137,47 +149,65 @@ public class MViewedFragment extends Fragment implements ArticleAdapter.OnItemCl
         return view;
     }
 
-    private void loadJson() {
+    //Get and display the data from the server
+    private void fetchData() {
         nyTimesAPI timesAPI = ApiClient.getRetrofit().create(nyTimesAPI.class);
-        Call<Response> call = timesAPI.getViewed(1, API_KEY);
-        call.enqueue(new Callback<Response>() {
-            @Override
-            public void onResponse(@NonNull Call<Response> call, @NonNull retrofit2.Response<Response> response) {
-                if (response.isSuccessful()) {
-                    if (response.body() != null) {
-                        articleList = response.body().getArticles();
-                        arrayList.addAll(articleList);
-                        adapter = new ArticleAdapter(arrayList, mActivity, isDark);
-                        recyclerView.setAdapter(adapter);
-                        adapter.notifyItemRangeInserted(adapter.getItemCount(), arrayList.size() - 1);
-                        adapter.setOnItemClickListener(MViewedFragment.this);
+        disposable.add(timesAPI.getViewedArticles(1, API_KEY)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<Response>() {
+                    @Override
+                    public void accept(Response response) throws Exception {
 
+                        try {
+
+                            if (response != null && response.getArticles() != null) {
+                                articleList = response.getArticles();
+                                arrayList.addAll(articleList);
+                                populateList(arrayList);
+                            }
+
+                        } catch (NumberFormatException e) {
+                            e.printStackTrace();
+                            throw new Exception();
+                        }
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        Snackbar.make(coordinatorLayout, "HTTP Error: " +
+                                throwable.getMessage(), Snackbar.LENGTH_LONG).show();
+                        throw new Exception();
 
                     }
-                } else {
-                    Snackbar.make(coordinatorLayout, "Error: " + response.message(),
-                            Snackbar.LENGTH_LONG).show();
-
-                }
-
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<Response> call, @NonNull Throwable t) {
-                Snackbar.make(coordinatorLayout, t.getMessage(), Snackbar.LENGTH_LONG).show();
-
-            }
-        });
+                }));
 
     }
 
-    private void setOrientation() {
-        switch (getResources().getConfiguration().orientation) {
+    private void populateList(ArrayList<Article> list) {
+        adapter = new ArticleAdapter(list, mActivity, isDark);
+        recyclerView.setAdapter(adapter);
+        adapter.notifyItemRangeInserted(adapter.getItemCount(), arrayList.size() - 1);
+        adapter.setOnItemClickListener(MViewedFragment.this);
+
+
+    }
+
+    /* Use different layouts for Landscape &
+     * Portrait mode.2 columns in portrait and 3 columns in landscape
+     */
+    private void setLayoutManage() {
+        switch (getResources().getConfiguration().orientation)
+        {
             case Configuration.ORIENTATION_PORTRAIT:
-                mLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+                mLayoutManager =
+                        new StaggeredGridLayoutManager(
+                                2, StaggeredGridLayoutManager.VERTICAL);
                 break;
             case Configuration.ORIENTATION_LANDSCAPE:
-                mLayoutManager = new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL);
+                mLayoutManager =
+                        new StaggeredGridLayoutManager(
+                                3, StaggeredGridLayoutManager.VERTICAL);
                 break;
 
         }
@@ -201,11 +231,24 @@ public class MViewedFragment extends Fragment implements ArticleAdapter.OnItemCl
 
     @Override
     public void OnItemClick(int position) {
-        Intent webIntent = new Intent(mActivity, WebActivity.class);
         Article articles = articleList.get(position);
-        webIntent.putExtra("url", articles.getWebUrl());
-        startActivity(webIntent);
+        String url = articles.getWebUrl();
+        ChromeUtils.launchChromeTabs(url,mActivity);
 
+    }
+
+    @Override
+    public void onStop() {
+        disposable.clear();
+        super.onStop();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (disposable != null && !disposable.isDisposed()) {
+            disposable.dispose();
+        }
     }
 
     @Override

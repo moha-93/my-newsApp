@@ -13,6 +13,7 @@ import com.moha.nytimesapp.modal.Article;
 import com.moha.nytimesapp.adapter.ArticleAdapter;
 import com.moha.nytimesapp.database.FavoriteDbHelper;
 import com.moha.nytimesapp.R;
+import com.moha.nytimesapp.utility.ChromeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,10 +69,9 @@ public class FavoriteActivity extends AppCompatActivity implements ArticleAdapte
 
     @Override
     public void OnItemClick(int position) {
-        Article article = articlesList.get(position);
-        Intent intent = new Intent(FavoriteActivity.this, WebActivity.class);
-        intent.putExtra("url", article.getWebUrl());
-        startActivity(intent);
+        Article articles = articlesList.get(position);
+        String url = articles.getWebUrl();
+        ChromeUtils.launchChromeTabs(url,FavoriteActivity.this);
     }
 }
 
