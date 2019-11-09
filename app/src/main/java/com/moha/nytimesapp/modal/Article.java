@@ -10,6 +10,8 @@ import java.util.List;
 
 public class Article implements Parcelable {
 
+    @SerializedName("id")
+    public long id;
     @SerializedName("url")
     @Expose
     private String webUrl;

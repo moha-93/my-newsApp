@@ -11,7 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:theme="@style/AppTheme.AppBarOverlay"
-        app:toolbarId="@id/toolbar">
+        app:toolbarId="@id/toolbar"
+        >
 
         <android.support.design.widget.CollapsingToolbarLayout
             android:layout_width="match_parent"
@@ -38,7 +39,8 @@
                 android:elevation="4dp"
                 app:layout_collapseMode="pin"
                 app:popupTheme="@style/AppTheme.PopupOverlay"
-                app:title="News List" />
+                app:title="News List"
+                />
 
 
         </android.support.design.widget.CollapsingToolbarLayout>

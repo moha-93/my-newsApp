@@ -1,43 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mef_content"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:id="@+id/mef_content"
     android:layout_margin="4dp"
+    android:orientation="vertical"
     tools:context=".fragment.MEmailedFragment">
 
-
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/meRecycler_view"
+        android:id="@+id/me_recycler_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
+        android:layout_height="match_parent" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/btn_float"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="24dp"
         android:src="@drawable/ic_brightness_2"
-        app:layout_anchor="@+id/meRecycler_view"
-        app:layout_anchorGravity="end|bottom"
-        android:layout_marginBottom="24dp"
-        android:layout_marginEnd="24dp"/>
-
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/btn_me_favorite"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginBottom="24dp"
-        android:src="@drawable/ic_favorite"
-        app:layout_anchor="@id/meRecycler_view"
-        app:layout_anchorGravity="start|bottom" />
-
-
-
-
+        app:layout_anchor="@+id/me_recycler_view"
+        app:layout_anchorGravity="end|bottom" />
 
 </android.support.design.widget.CoordinatorLayout>

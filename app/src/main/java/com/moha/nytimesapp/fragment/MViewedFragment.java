@@ -3,7 +3,6 @@ package com.moha.nytimesapp.fragment;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -15,6 +14,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,12 +24,11 @@ import com.moha.nytimesapp.BuildConfig;
 import com.moha.nytimesapp.utility.ChromeUtils;
 import com.moha.nytimesapp.utility.NetworkUtils;
 import com.moha.nytimesapp.R;
-import com.moha.nytimesapp.activity.FavoriteActivity;
 import com.moha.nytimesapp.adapter.ArticleAdapter;
 import com.moha.nytimesapp.modal.Article;
 import com.moha.nytimesapp.modal.Response;
 import com.moha.nytimesapp.rest.ApiClient;
-import com.moha.nytimesapp.rest.nyTimesAPI;
+import com.moha.nytimesapp.rest.WebServiceAPI;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,18 +42,18 @@ import static android.content.Context.MODE_PRIVATE;
 
 
 public class MViewedFragment extends Fragment implements ArticleAdapter.OnItemClickListener {
-
-    public static final String API_KEY = BuildConfig.ApiKey;
-    private ArrayList<Article> arrayList;
-    private List<Article> articleList;
+    @SuppressLint("StaticFieldLeak")
+    private static MViewedFragment instance;
     protected FragmentActivity mActivity;
-    private ArticleAdapter adapter;
+    public static final String API_KEY = BuildConfig.ApiKey;
     private RecyclerView recyclerView;
+    private List<Article> articleList;
+    private ArrayList<Article> arrayList;
+    private ArticleAdapter adapter;
     private CoordinatorLayout coordinatorLayout;
     StaggeredGridLayoutManager mLayoutManager;
-    private boolean isDark = false;
-    @SuppressLint("StaticFieldLeak")
-    static MViewedFragment instance;
+    boolean isDark = false;
+    FloatingActionButton btn_darkMode;
     CompositeDisposable disposable = new CompositeDisposable();
 
     public MViewedFragment() {
@@ -64,7 +63,6 @@ public class MViewedFragment extends Fragment implements ArticleAdapter.OnItemCl
     public static MViewedFragment getInstance() {
         if (instance == null) {
             instance = new MViewedFragment();
-
         }
         return instance;
     }
@@ -72,16 +70,12 @@ public class MViewedFragment extends Fragment implements ArticleAdapter.OnItemCl
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-
         View view = inflater.inflate(R.layout.fragment_mviewed, container, false);
         coordinatorLayout = view.findViewById(R.id.mv_content);
-        FloatingActionButton btn_darkMode = view.findViewById(R.id.btnDM_mv);
-        FloatingActionButton btnAdd_favorite = view.findViewById(R.id.btn_mv_favorite);
-        recyclerView = view.findViewById(R.id.mvRecycler_view);
+         btn_darkMode = view.findViewById(R.id.btnDM_mv);
+        recyclerView = view.findViewById(R.id.mv_recycler_view);
         recyclerView.setHasFixedSize(true);
         setLayoutManage();
-
 
         // Check InstanceState
         if (savedInstanceState != null) {
@@ -89,29 +83,21 @@ public class MViewedFragment extends Fragment implements ArticleAdapter.OnItemCl
         } else {
             arrayList = new ArrayList<>();
         }
-
      //---------------------------------------------------------------------------------------------
         //Check Internet connection and fetching the data
         if (NetworkUtils.isNetworkAvailable(mActivity)) {
-
             fetchData();
-
         } else {
-            Toast.makeText(mActivity, "No connection...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(mActivity, "No internet connection...", Toast.LENGTH_SHORT).show();
         }
-
      //---------------------------------------------------------------------------------------------
         // Define and check for Dark mode state preference
         isDark = getThemeStatePref();
         if (isDark) {
-
             coordinatorLayout.setBackgroundColor(getResources().getColor(R.color.black));
-
         } else {
             coordinatorLayout.setBackgroundColor(getResources().getColor(R.color.white));
-
         }
-
      //---------------------------------------------------------------------------------------------
         // Button set for Dark mode
         btn_darkMode.setOnClickListener(new View.OnClickListener() {
@@ -119,13 +105,9 @@ public class MViewedFragment extends Fragment implements ArticleAdapter.OnItemCl
             public void onClick(View v) {
                 isDark = !isDark;
                 if (isDark) {
-
                     coordinatorLayout.setBackgroundColor(getResources().getColor(R.color.black));
-
-
                 } else {
                     coordinatorLayout.setBackgroundColor(getResources().getColor(R.color.white));
-
                 }
                 setLayoutManage();
                 adapter = new ArticleAdapter(articleList, mActivity, isDark);
@@ -135,62 +117,48 @@ public class MViewedFragment extends Fragment implements ArticleAdapter.OnItemCl
             }
         });
 
-        //---------------------------------------------------------------------------------------------
-        //Set button for favorite list
-        btnAdd_favorite.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent favoriteIntent = new Intent(getContext(), FavoriteActivity.class);
-                startActivity(favoriteIntent);
-            }
-        });
-
-
         return view;
     }
-
     //Get and display the data from the server
     private void fetchData() {
-        nyTimesAPI timesAPI = ApiClient.getRetrofit().create(nyTimesAPI.class);
-        disposable.add(timesAPI.getViewedArticles(1, API_KEY)
+        WebServiceAPI timesAPI = ApiClient.getRetrofit().create(WebServiceAPI.class);
+        disposable.add(timesAPI.getViewedArticles(30, API_KEY)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<Response>() {
                     @Override
                     public void accept(Response response) throws Exception {
-
                         try {
-
                             if (response != null && response.getArticles() != null) {
                                 articleList = response.getArticles();
                                 arrayList.addAll(articleList);
                                 populateList(arrayList);
                             }
-
                         } catch (NumberFormatException e) {
                             e.printStackTrace();
                             throw new Exception();
                         }
                     }
-                }, new Consumer<Throwable>() {
+                }
+                , new Consumer<Throwable>() {
                     @Override
                     public void accept(Throwable throwable) throws Exception {
+                        Log.d("TAG: ", throwable.getMessage());
                         Snackbar.make(coordinatorLayout, "HTTP Error: " +
                                 throwable.getMessage(), Snackbar.LENGTH_LONG).show();
                         throw new Exception();
-
                     }
-                }));
+                }
+                ));
 
     }
 
     private void populateList(ArrayList<Article> list) {
         adapter = new ArticleAdapter(list, mActivity, isDark);
         recyclerView.setAdapter(adapter);
-        adapter.notifyItemRangeInserted(adapter.getItemCount(), arrayList.size() - 1);
+        adapter.notifyItemRangeInserted(adapter.getItemCount(), list.size() - 1);
+        adapter.notifyDataSetChanged();
         adapter.setOnItemClickListener(MViewedFragment.this);
-
-
     }
 
     /* Use different layouts for Landscape &
@@ -238,17 +206,9 @@ public class MViewedFragment extends Fragment implements ArticleAdapter.OnItemCl
     }
 
     @Override
-    public void onStop() {
-        disposable.clear();
-        super.onStop();
-    }
-
-    @Override
     public void onDestroy() {
         super.onDestroy();
-        if (disposable != null && !disposable.isDisposed()) {
-            disposable.dispose();
-        }
+        disposable.clear();
     }
 
     @Override

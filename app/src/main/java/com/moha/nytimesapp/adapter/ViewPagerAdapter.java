@@ -10,9 +10,8 @@ import java.util.List;
 
 public class ViewPagerAdapter extends FragmentPagerAdapter {
 
-    List<Fragment> fragments = new ArrayList<>();
-    List<String> titleList = new ArrayList<>();
-
+    private List<Fragment> fragments = new ArrayList<>();
+    private List<String> titleList = new ArrayList<>();
 
     public ViewPagerAdapter(FragmentManager fm) {
         super(fm);
@@ -34,7 +33,6 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
         fragments.add(fragment);
         titleList.add(title);
     }
-
 
     // Set Title
     @Nullable

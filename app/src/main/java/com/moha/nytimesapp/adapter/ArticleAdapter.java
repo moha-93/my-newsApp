@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,23 +13,20 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
+import com.google.gson.Gson;
+import com.moha.nytimesapp.modelDB.Favorite;
+import com.moha.nytimesapp.modelDB.FavoriteViewModel;
 import com.moha.nytimesapp.modal.Article;
-import com.moha.nytimesapp.database.FavoriteDbHelper;
-import com.moha.nytimesapp.utility.NetworkUtils;
 import com.moha.nytimesapp.R;
 import com.squareup.picasso.Picasso;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
-public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ARViewHolder> {
+public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ArticleViewHolder> {
     private List<Article> articleList;
-
     private Context context;
-    public static List<Article> offlineArticles = new ArrayList<>();
     private boolean isDark = false;
     private OnItemClickListener listener;
 
@@ -38,100 +36,101 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ARViewHo
         this.isDark = isDark;
     }
 
-
-    public ArticleAdapter(List<Article> articleList, Context context) {
-        this.articleList = articleList;
-        this.context = context;
-    }
-
     @NonNull
     @Override
-    public ARViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+    public ArticleViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
         View view = LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.news_model, viewGroup, false);
-        return new ARViewHolder(view);
+        return new ArticleViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull final ARViewHolder arViewHolder, final int i) {
-
-
-        final Article article = articleList.get(i);
-
-
+    public void onBindViewHolder(@NonNull final ArticleViewHolder articleViewHolder, final int i) {
+        Article article = articleList.get(i);
         if (article != null) {
-            arViewHolder.imageView.setAnimation(AnimationUtils.loadAnimation
+            articleViewHolder.imageView.setAnimation(AnimationUtils.loadAnimation
                     (context, R.anim.fade_transition_anim));
-            arViewHolder.linearLayout.setAnimation(AnimationUtils.loadAnimation
+            articleViewHolder.linearLayout.setAnimation(AnimationUtils.loadAnimation
                     (context, R.anim.fade_scale_animation));
-            arViewHolder.txt_headline.setText(article.getHeadLine());
-            arViewHolder.txt_summary.setText(article.getSummary());
-            arViewHolder.txt_date.setText(article.getPublishDate());
-            arViewHolder.imageView.setImageResource(0);
+            articleViewHolder.txt_headline.setText(article.getHeadLine());
+            articleViewHolder.txt_summary.setText(article.getSummary());
+            articleViewHolder.txt_date.setText(article.getPublishDate());
+            articleViewHolder.imageView.setImageResource(0);
+
             if (article.mediaList.get(0).metadata.size() > 2) {
                 Picasso.get().load(article.getMediaList().get(0).getMetadata().get(1).getImgUrl())
-                        .into(arViewHolder.imageView);
-
+                        .placeholder(R.drawable.no_image_available)
+                        .into(articleViewHolder.imageView);
             }
 
-
-            arViewHolder.toggleButton.setTextOff("Add");
-            arViewHolder.toggleButton.setTextOn("Remove");
-            arViewHolder.toggleButton.setChecked(article.isFavorite());
-            arViewHolder.toggleButton.setOnClickListener(new View.OnClickListener() {
+            final int position = articleViewHolder.getAdapterPosition();
+            if (FavoriteViewModel.isFavorite((int) articleList.get(position).id) == 1) {
+                articleViewHolder.btn_add_to_fav.setImageResource(R.drawable.ic_favorite);
+            } else {
+                articleViewHolder.btn_add_to_fav.setImageResource(R.drawable.ic_favorite_border);
+            }
+            articleViewHolder.btn_add_to_fav.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
-                    article.isFavorite = !article.isFavorite;
-                    if (!NetworkUtils.isNetworkAvailable(context)) {
-                        FavoriteDbHelper dbHelper = new FavoriteDbHelper(context);
-                        dbHelper.updateArticle(article);
-                    }
-
-                    if (article.isFavorite) {
-                        arViewHolder.toggleButton.setTextOff("Add");
-                        offlineArticles.add(article);
-                        Toast.makeText(context, "Added to favorites..press on ♥ ", Toast.LENGTH_SHORT).show();
-
+                    if (FavoriteViewModel.isFavorite((int) articleList.get(position).id) != 1) {
+                        addOrRemoveFavorite(articleList.get(position), true);
+                        articleViewHolder.btn_add_to_fav.setImageResource(R.drawable.ic_favorite);
+                        Toast.makeText(context, "Item added to favorites..", Toast.LENGTH_SHORT).show();
                     } else {
-                        arViewHolder.toggleButton.setTextOn("Remove");
-                        offlineArticles.remove(article);
-
-
-                        Toast.makeText(context, "Item removed..☺ ", Toast.LENGTH_SHORT).show();
-
-
+                        addOrRemoveFavorite(articleList.get(position), false);
+                        articleViewHolder.btn_add_to_fav.setImageResource(R.drawable.ic_favorite_border);
+                        Toast.makeText(context, "Item removed from favorites..", Toast.LENGTH_SHORT).show();
                     }
                 }
-            });
 
+            });
 
         }
 
     }
 
+    private void addOrRemoveFavorite(Article article, boolean isAdd) {
+        Favorite favorite = new Favorite();
+        favorite.id = (int) article.id;
+        favorite.webUrl = article.getWebUrl();
+        favorite.headline = article.getHeadLine();
+        favorite.summary = article.getSummary();
+        favorite.publishDate = article.getPublishDate();
+        favorite.imgUrl = article.mediaList.get(0).metadata.get(1).getImgUrl();
+        Log.d("TAG", new Gson().toJson(favorite));
+
+        if (isAdd) {
+            FavoriteViewModel.insert(favorite);
+        } else {
+            FavoriteViewModel.delete(favorite);
+        }
+    }
 
     @Override
     public int getItemCount() {
-        return articleList.size();
+        int a;
+        if (articleList != null && !articleList.isEmpty()) {
+            a = articleList.size();
+        } else {
+            a = 0;
+        }
+        return a;
     }
 
-
-    public class ARViewHolder extends RecyclerView.ViewHolder {
+    public class ArticleViewHolder extends RecyclerView.ViewHolder {
         private TextView txt_headline, txt_summary, txt_date;
         private ImageView imageView;
         private LinearLayout linearLayout;
-        private ToggleButton toggleButton;
+        private ImageView btn_add_to_fav;
 
-
-        private ARViewHolder(@NonNull final View itemView) {
+        private ArticleViewHolder(@NonNull final View itemView) {
             super(itemView);
             txt_headline = itemView.findViewById(R.id.txt_headline);
             txt_summary = itemView.findViewById(R.id.txt_summary);
             txt_date = itemView.findViewById(R.id.txt_date);
             imageView = itemView.findViewById(R.id.model_img);
             linearLayout = itemView.findViewById(R.id.anim_container);
-            toggleButton = itemView.findViewById(R.id.btn_add);
+            btn_add_to_fav = itemView.findViewById(R.id.btn_add_favorite);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -149,12 +148,9 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ARViewHo
             if (isDark) {
                 setDarkTheme();
             }
-
-
         }
 
         private void setDarkTheme() {
-
             linearLayout.setBackgroundResource(R.drawable.card_black_bg);
             txt_headline.setTextColor(Color.rgb(240, 248, 255));
             txt_summary.setTextColor(Color.WHITE);

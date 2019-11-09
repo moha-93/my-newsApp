@@ -10,7 +10,7 @@ import retrofit2.http.GET;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
-public interface nyTimesAPI {
+public interface WebServiceAPI {
 
     @GET("svc/mostpopular/v2/emailed/{period}.json")
     Observable<Response> getEmailedArticles(@Path("period")Integer period,
