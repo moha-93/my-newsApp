@@ -28,8 +28,7 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
     }
 
     //Add Fragment To Page
-    public void addFragment(Fragment fragment,String title){
-
+    public void addFragment(Fragment fragment, String title){
         fragments.add(fragment);
         titleList.add(title);
     }

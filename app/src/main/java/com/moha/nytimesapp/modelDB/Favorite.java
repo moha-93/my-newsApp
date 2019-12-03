@@ -22,19 +22,6 @@ public class Favorite {
     @ColumnInfo(name = "webUrl")
     public String webUrl;
 
-    public Favorite(String title, String description, String publishDate) {
-        this.headline = title;
-        this.summary = description;
-        this.publishDate = publishDate;
-    }
-
-    public Favorite(String imgUrl, String headline, String summary, String publishDate) {
-        this.imgUrl = imgUrl;
-        this.headline = headline;
-        this.summary = summary;
-        this.publishDate = publishDate;
-    }
-
     public Favorite() {
 
     }

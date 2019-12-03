@@ -1,11 +1,11 @@
 package com.moha.nytimesapp.fragment;
 
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -19,40 +19,45 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.moha.nytimesapp.BuildConfig;
 import com.moha.nytimesapp.utility.ChromeUtils;
 import com.moha.nytimesapp.utility.NetworkUtils;
 import com.moha.nytimesapp.R;
 import com.moha.nytimesapp.adapter.ArticleAdapter;
 import com.moha.nytimesapp.modal.Article;
 import com.moha.nytimesapp.modal.Response;
-import com.moha.nytimesapp.rest.ApiClient;
 import com.moha.nytimesapp.rest.WebServiceAPI;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import dagger.android.support.AndroidSupportInjection;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
 import static android.content.Context.MODE_PRIVATE;
+import static com.moha.nytimesapp.dependency.base.App.API_KEY;
 
 public class MEmailedFragment extends Fragment implements ArticleAdapter.OnItemClickListener {
+    private static final String LIST_STATE = "list_state";
     @SuppressLint("StaticFieldLeak")
     private static MEmailedFragment instance;
     protected FragmentActivity mActivity;
-    public static final String API_KEY = BuildConfig.ApiKey;
     private RecyclerView recyclerView;
     private List<Article> articleList;
-    private ArrayList<Article> arrayList;
+    private ArrayList<Article> articleInstance = new ArrayList<>();
     private ArticleAdapter adapter;
     private CoordinatorLayout coordinatorLayout;
     StaggeredGridLayoutManager mLayoutManager;
     boolean isDark = false;
     FloatingActionButton btn_darkMode;
     CompositeDisposable disposable = new CompositeDisposable();
+
+    @Inject
+    WebServiceAPI serviceAPI;
 
     public MEmailedFragment() {
         // Required empty public constructor
@@ -77,18 +82,18 @@ public class MEmailedFragment extends Fragment implements ArticleAdapter.OnItemC
 
         // Check InstanceState
         if (savedInstanceState != null) {
-            arrayList = savedInstanceState.getParcelableArrayList("articles");
+            articleInstance = savedInstanceState.getParcelableArrayList(LIST_STATE);
+            displayData();
         } else {
-            arrayList = new ArrayList<>();
+            recyclerView.setHasFixedSize(true);
+            setLayoutManager();
+            if (NetworkUtils.isNetworkAvailable(mActivity)) {
+                fetchData();
+            } else {
+                Toast.makeText(mActivity, "Oops! No internet connection", Toast.LENGTH_LONG).show();
+            }
         }
-     //---------------------------------------------------------------------------------------------
-        // Check Internet connection and fetching the data
-        if (NetworkUtils.isNetworkAvailable(mActivity)) {
-            fetchData();
-        } else {
-            Toast.makeText(mActivity, "No internet connection...", Toast.LENGTH_LONG).show();
-        }
-     //---------------------------------------------------------------------------------------------
+        //---------------------------------------------------------------------------------------------
         // Define and check for Dark mode state preference
         isDark = getThemeStatePref();
         if (isDark) {
@@ -107,19 +112,16 @@ public class MEmailedFragment extends Fragment implements ArticleAdapter.OnItemC
                 } else {
                     coordinatorLayout.setBackgroundColor(getResources().getColor(R.color.white));
                 }
-                setLayoutManager();
-                adapter = new ArticleAdapter(articleList, mActivity, isDark);
-                recyclerView.setAdapter(adapter);
+                displayData();
                 saveThemeStatePref(isDark);
-                adapter.setOnItemClickListener(MEmailedFragment.this);
             }
         });
 
         return view;
     }
+
     //Get and display the data from the server
     private void fetchData() {
-        WebServiceAPI serviceAPI = ApiClient.getRetrofit().create(WebServiceAPI.class);
         disposable.add(serviceAPI.getEmailedArticles(30, API_KEY)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -129,8 +131,8 @@ public class MEmailedFragment extends Fragment implements ArticleAdapter.OnItemC
                         try {
                             if (response != null && response.getArticles() != null) {
                                 articleList = response.getArticles();
-                                arrayList.addAll(articleList);
-                                populateList(arrayList);
+                                articleInstance.addAll(articleList);
+                                populateList(articleList);
                             }
                         } catch (NumberFormatException e) {
                             e.printStackTrace();
@@ -149,21 +151,31 @@ public class MEmailedFragment extends Fragment implements ArticleAdapter.OnItemC
 
     }
 
-    private void populateList(ArrayList<Article> list) {
+    private void populateList(List<Article> list) {
         adapter = new ArticleAdapter(list, mActivity, isDark);
         recyclerView.setAdapter(adapter);
+        recyclerView.smoothScrollToPosition(0);
         adapter.notifyItemRangeInserted(adapter.getItemCount(), list.size() - 1);
         adapter.notifyDataSetChanged();
         adapter.setOnItemClickListener(MEmailedFragment.this);
 
     }
 
+    private void displayData() {
+        recyclerView.setHasFixedSize(true);
+        setLayoutManager();
+        adapter = new ArticleAdapter(articleInstance, mActivity, isDark);
+        recyclerView.setAdapter(adapter);
+        adapter.notifyDataSetChanged();
+        adapter.setOnItemClickListener(this);
+
+    }
+
     /* Use different layouts for Landscape &
      * Portrait mode.2 columns in portrait and 3 columns in landscape
-      */
+     */
     private void setLayoutManager() {
-        switch (getResources().getConfiguration().orientation)
-        {
+        switch (getResources().getConfiguration().orientation) {
             case Configuration.ORIENTATION_PORTRAIT:
                 mLayoutManager =
                         new StaggeredGridLayoutManager(
@@ -179,6 +191,7 @@ public class MEmailedFragment extends Fragment implements ArticleAdapter.OnItemC
         recyclerView.setLayoutManager(mLayoutManager);
     }
 
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -187,10 +200,12 @@ public class MEmailedFragment extends Fragment implements ArticleAdapter.OnItemC
 
     @Override
     public void onAttach(Context context) {
+        AndroidSupportInjection.inject(this);
         super.onAttach(context);
         if (context instanceof FragmentActivity) {
             mActivity = (FragmentActivity) context;
         }
+
     }
 
     @Override
@@ -203,7 +218,7 @@ public class MEmailedFragment extends Fragment implements ArticleAdapter.OnItemC
     public void OnItemClick(int position) {
         Article articles = articleList.get(position);
         String url = articles.getWebUrl();
-        ChromeUtils.launchChromeTabs(url,mActivity);
+        ChromeUtils.launchChromeTabs(url, mActivity);
 
     }
 
@@ -223,8 +238,7 @@ public class MEmailedFragment extends Fragment implements ArticleAdapter.OnItemC
     @Override
     public void onSaveInstanceState(@NonNull Bundle state) {
         super.onSaveInstanceState(state);
-        state.putParcelableArrayList("articles", arrayList);
+        state.putParcelableArrayList(LIST_STATE, articleInstance);
     }
-
 
 }

@@ -20,8 +20,15 @@ import com.moha.nytimesapp.R;
 import com.moha.nytimesapp.adapter.ViewPagerAdapter;
 import com.squareup.picasso.Picasso;
 
+import javax.inject.Inject;
 
-public class MainActivity extends AppCompatActivity {
+import dagger.android.AndroidInjection;
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.HasAndroidInjector;
+
+
+public class MainActivity extends AppCompatActivity implements HasAndroidInjector {
     private ViewPager viewPager;
     private MEmailedFragment meFragment;
     private MSharedFragment msFragment;
@@ -29,9 +36,12 @@ public class MainActivity extends AppCompatActivity {
     private TabLayout tabLayout;
     private FavoriteViewModel viewModel;
 
+    @Inject
+    DispatchingAndroidInjector<Object> androidInjector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -44,10 +54,8 @@ public class MainActivity extends AppCompatActivity {
         msFragment = MSharedFragment.getInstance();
         mvFragment = MViewedFragment.getInstance();
         addPages();
-
-        String uri = "https://cdn.pixabay.com/photo/2016/11/29/13/17/breakfast-1869772_960_720.jpg";
         ImageView imageView = findViewById(R.id.img_tb);
-        Picasso.get().load(uri).fit().into(imageView);
+        Picasso.get().load(getResources().getString(R.string.img_url)).fit().into(imageView);
         viewModel = ViewModelProviders.of(this).get(FavoriteViewModel.class);
     }
 
@@ -58,7 +66,6 @@ public class MainActivity extends AppCompatActivity {
         adapter.addFragment(mvFragment, "most viewed");
         viewPager.setAdapter(adapter);
         tabLayout.setupWithViewPager(viewPager);
-
     }
 
     @Override
@@ -77,5 +84,10 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public AndroidInjector<Object> androidInjector() {
+        return androidInjector;
     }
 }

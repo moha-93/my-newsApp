@@ -47,45 +47,43 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ArticleV
     @Override
     public void onBindViewHolder(@NonNull final ArticleViewHolder articleViewHolder, final int i) {
         Article article = articleList.get(i);
-        if (article != null) {
-            articleViewHolder.imageView.setAnimation(AnimationUtils.loadAnimation
-                    (context, R.anim.fade_transition_anim));
-            articleViewHolder.linearLayout.setAnimation(AnimationUtils.loadAnimation
-                    (context, R.anim.fade_scale_animation));
-            articleViewHolder.txt_headline.setText(article.getHeadLine());
-            articleViewHolder.txt_summary.setText(article.getSummary());
-            articleViewHolder.txt_date.setText(article.getPublishDate());
-            articleViewHolder.imageView.setImageResource(0);
-
-            if (article.mediaList.get(0).metadata.size() > 2) {
-                Picasso.get().load(article.getMediaList().get(0).getMetadata().get(1).getImgUrl())
-                        .placeholder(R.drawable.no_image_available)
-                        .into(articleViewHolder.imageView);
-            }
-
-            final int position = articleViewHolder.getAdapterPosition();
-            if (FavoriteViewModel.isFavorite((int) articleList.get(position).id) == 1) {
-                articleViewHolder.btn_add_to_fav.setImageResource(R.drawable.ic_favorite);
-            } else {
-                articleViewHolder.btn_add_to_fav.setImageResource(R.drawable.ic_favorite_border);
-            }
-            articleViewHolder.btn_add_to_fav.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (FavoriteViewModel.isFavorite((int) articleList.get(position).id) != 1) {
-                        addOrRemoveFavorite(articleList.get(position), true);
-                        articleViewHolder.btn_add_to_fav.setImageResource(R.drawable.ic_favorite);
-                        Toast.makeText(context, "Item added to favorites..", Toast.LENGTH_SHORT).show();
-                    } else {
-                        addOrRemoveFavorite(articleList.get(position), false);
-                        articleViewHolder.btn_add_to_fav.setImageResource(R.drawable.ic_favorite_border);
-                        Toast.makeText(context, "Item removed from favorites..", Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-            });
-
+        articleViewHolder.imageView.setAnimation(AnimationUtils.loadAnimation
+                (context, R.anim.fade_transition_anim));
+        articleViewHolder.linearLayout.setAnimation(AnimationUtils.loadAnimation
+                (context, R.anim.fade_scale_animation));
+        String headLine = article.getHeadLine();
+        String summary = article.getSummary();
+        String publishDate = article.getPublishDate();
+        articleViewHolder.txt_headline.setText(headLine);
+        articleViewHolder.txt_summary.setText(summary);
+        articleViewHolder.txt_date.setText(publishDate);
+        if (article.mediaList.get(0).metadata.size() > 2) {
+            Picasso.get().load(article.getMediaList().get(0).getMetadata().get(1).getImgUrl())
+                    .placeholder(R.drawable.no_image_available)
+                    .into(articleViewHolder.imageView);
         }
+
+        final int position = articleViewHolder.getAdapterPosition();
+        if (FavoriteViewModel.isFavorite((int) articleList.get(position).id) == 1) {
+            articleViewHolder.btn_add_to_fav.setImageResource(R.drawable.ic_favorite);
+        } else {
+            articleViewHolder.btn_add_to_fav.setImageResource(R.drawable.ic_favorite_border);
+        }
+        articleViewHolder.btn_add_to_fav.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (FavoriteViewModel.isFavorite((int) articleList.get(position).id) != 1) {
+                    addOrRemoveFavorite(articleList.get(position), true);
+                    articleViewHolder.btn_add_to_fav.setImageResource(R.drawable.ic_favorite);
+                    Toast.makeText(context, "Item added to favorites..", Toast.LENGTH_SHORT).show();
+                } else {
+                    addOrRemoveFavorite(articleList.get(position), false);
+                    articleViewHolder.btn_add_to_fav.setImageResource(R.drawable.ic_favorite_border);
+                    Toast.makeText(context, "Item removed from favorites..", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+        });
 
     }
 
@@ -108,13 +106,7 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ArticleV
 
     @Override
     public int getItemCount() {
-        int a;
-        if (articleList != null && !articleList.isEmpty()) {
-            a = articleList.size();
-        } else {
-            a = 0;
-        }
-        return a;
+        return (articleList == null) ? 0 : articleList.size();
     }
 
     public class ArticleViewHolder extends RecyclerView.ViewHolder {
@@ -144,7 +136,6 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ArticleV
                     }
                 }
             });
-
             if (isDark) {
                 setDarkTheme();
             }
@@ -155,7 +146,6 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ArticleV
             txt_headline.setTextColor(Color.rgb(240, 248, 255));
             txt_summary.setTextColor(Color.WHITE);
             txt_date.setTextColor(Color.WHITE);
-
         }
     }
 

@@ -4,4 +4,5 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="favorite_list">Favorite list</string>
+    <string name="img_url">https://cdn.pixabay.com/photo/2016/11/29/13/17/breakfast-1869772_960_720.jpg</string>
 </resources>

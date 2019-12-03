@@ -7,18 +7,22 @@ android {
         applicationId "com.example.nytimesapidemo"
         minSdkVersion 21
         targetSdkVersion 28
+        multiDexEnabled true
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
-        debug{
-            buildConfigField 'String', "ApiKey" , API_KEY
+        //debug{
+        //  buildConfigField 'String', "ApiKey" , API_KEY
+        // }
+        buildTypes.each {
+            it.buildConfigField('String', 'ApiKey', API_KEY)
         }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            buildConfigField 'String', "ApiKey" , API_KEY
+            //buildConfigField 'String', "ApiKey" , API_KEY
 
 
         }
@@ -36,6 +40,7 @@ dependencies {
     implementation 'com.android.support:recyclerview-v7:28.0.0'
     implementation 'com.android.support:cardview-v7:28.0.0'
     implementation 'com.squareup.picasso:picasso:2.71828'
+    implementation 'com.android.support:multidex:1.0.3'
 
     //Chrome custom tabs
     implementation 'com.android.support:customtabs:28.0.0'
@@ -45,7 +50,7 @@ dependencies {
     //Retrofit2
     implementation 'com.squareup.retrofit2:retrofit:2.6.2'
     implementation 'com.squareup.retrofit2:adapter-rxjava2:2.6.2'
-    implementation 'com.squareup.retrofit2:converter-gson:2.6.1'
+    implementation 'com.squareup.retrofit2:converter-gson:2.6.2'
     implementation 'com.squareup.okhttp3:okhttp:4.2.2'
     implementation 'com.squareup.okhttp3:logging-interceptor:4.2.2'
 
@@ -70,6 +75,9 @@ dependencies {
     implementation "android.arch.persistence.room:runtime:$room_version"
     annotationProcessor "android.arch.persistence.room:compiler:$room_version"
 
-
-
+    //Dagger 2
+    api 'com.google.dagger:dagger:2.25.2'
+    api 'com.google.dagger:dagger-android-support:2.25.2'
+    annotationProcessor 'com.google.dagger:dagger-compiler:2.25.2'
+    annotationProcessor 'com.google.dagger:dagger-android-processor:2.25.2'
 }
