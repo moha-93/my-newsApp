@@ -30,6 +30,10 @@ Adding favorite list by using RecyclerView for showing offline items.
 
 Swipe a favorite item to the left to remove it and undo it by Snackbar action
 
+Add dependency injection library.
+
+Add welcome screen.
+
 
 ### Main Screen Screenshots
 
