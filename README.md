@@ -24,15 +24,27 @@ Use the Retrofit networking library to access the New York Times API.
 
 Use the RXJava2 clean architecture library 
 
+Adding MVVM library for offline accessing.
+
+Adding favorite list by using RecyclerView for showing offline items.
+
+Swipe a favorite item to the left to remove it and undo it by Snackbar action
+
 
 ### Main Screen Screenshots
 
 Landscape
 
-![landscape](https://user-images.githubusercontent.com/54297573/64065439-517cf000-cc16-11e9-946b-a55186320747.PNG)
+![Landscape](https://user-images.githubusercontent.com/54297573/68533457-bd27bb80-0331-11ea-89f4-f9c03246fc69.JPG)
 
 Potrait
 
-![Potrait](https://user-images.githubusercontent.com/54297573/64065460-b0426980-cc16-11e9-9b86-a61fdd178abe.PNG)
+![Potrait](https://user-images.githubusercontent.com/54297573/68533469-d92b5d00-0331-11ea-9c80-550035ff2ab4.JPG)
 
-![Potrait2](https://user-images.githubusercontent.com/54297573/64065466-bafcfe80-cc16-11e9-8712-b348285a337c.PNG)
+DarkMode
+
+![Darkmode](https://user-images.githubusercontent.com/54297573/68533484-0415b100-0332-11ea-838f-c607a66682bf.JPG)
+
+Favorite list
+
+![FavoriteList](https://user-images.githubusercontent.com/54297573/68533486-20b1e900-0332-11ea-9701-a750e11c1abb.JPG)
